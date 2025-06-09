@@ -1,0 +1,26 @@
+module modulo_counter #(parameter n = 25, parameter k = 25000000)(
+    input Clock,
+    input Resetn,
+    output reg rollover
+);
+    reg [n-1:0] count;
+
+    always @(posedge Clock)
+    begin
+        if (!Resetn)
+        begin
+            count <= 0;
+            rollover <= 0;
+        end
+        else if (count == k - 1)
+        begin
+            count <= 0;
+            rollover <= 1;
+        end
+        else
+        begin
+            count <= count + 1;
+            rollover <= 0;
+        end
+    end
+endmodule
