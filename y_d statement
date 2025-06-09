@@ -1,0 +1,50 @@
+always @(go, y_Q, send_data, data_size, half_sec_enable)
+begin: state_table
+	case (y_Q)
+		s_WAIT_SEND:
+			if (go) Y_D = s_WAIT_BLANK;
+			else Y_D = s_WAIT_SEND;
+			
+		s_WAIT_BLANK: // sync with the half-second pulses
+			if (!half_sec_enable)
+				Y_D = s_WAIT_BLANK;
+			else if (send_data[0] == 1'b0)
+				Y_D = s_SEND_DOT;
+			else
+				Y_D = s_SEND_DASH_1;
+				
+		s_SEND_DOT: // wait here for one half-second period
+			if (!half_sec_enable)
+				Y_D = s_SEND_DOT;
+			else if (data_size == 3'd1) // check if we are done with this letter
+				Y_D = s_RELEASE_SEND;
+			else
+				Y_D = s_WAIT_BLANK;
+				
+		s_SEND_DASH_1: // wait for three half-second periods
+			if (!half_sec_enable)
+				Y_D = s_SEND_DASH_1;
+			else
+				Y_D = s_SEND_DASH_2;
+				
+		s_SEND_DASH_2: // wait for two more half-second periods
+			if (!half_sec_enable)
+				Y_D = s_SEND_DASH_2;
+			else
+				Y_D = s_SEND_DASH_3;
+				
+		s_SEND_DASH_3: // wait for one more half-second period
+			if (!half_sec_enable)
+				Y_D = s_SEND_DASH_3;
+			else if (data_size == 3'd1) // check if we are done with this letter
+				Y_D = s_RELEASE_SEND;
+			else
+				Y_D = s_WAIT_BLANK;
+				
+		s_RELEASE_SEND:
+			if (~go) Y_D = s_WAIT_SEND;
+			else Y_D = s_RELEASE_SEND;
+			
+		default: Y_D = 3'bxxx;
+	endcase
+end
